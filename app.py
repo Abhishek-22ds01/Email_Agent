@@ -50,32 +50,39 @@ if search:
 else:
     results = df
 
-# Show results in table
-st.dataframe(results[["from", "subject","priority","sentiment","is_support"]])
+st.subheader("📩 Email List")
+
+# Iterate over results and add Draft Reply button
+for _, row in results.iterrows():
+    st.write(f"**From:** {row['from']}")
+    st.write(f"**Subject:** {row['subject']}")
+    st.write(f"**Priority:** {row['priority']}")
+    st.write(f"**Sentiment:** {row['sentiment']}")
+    st.write(f"**Support Related:** {row['is_support']}")
+    
+    # Draft reply button
+    if st.button(f"Generate Draft Reply", key=row.name):
+        try:
+            draft_reply = generate_draft_reply(row['subject'], row['body'])
+        except Exception as e:
+            draft_reply = f"Could not generate reply: {str(e)}"
+        st.text_area("📄 Draft Reply", value=draft_reply, height=150)
+    
+    st.markdown("---")
 
 # Show only support emails toggle
 if st.checkbox("Show only support emails"):
-    st.dataframe(df[df["is_support"]][["from", "subject", "is_support"]])
-
-
-# 📩 Expandable email details
-# -------------------------------
-st.subheader("📩 Email Details")
-
-for i, row in results.iterrows():
-    with st.expander(f"📧 {row['subject']} ({row['from']})"):
+    support_emails = results[results["is_support"]]
+    for _, row in support_emails.iterrows():
         st.write(f"**From:** {row['from']}")
+        st.write(f"**Subject:** {row['subject']}")
         st.write(f"**Priority:** {row['priority']}")
         st.write(f"**Sentiment:** {row['sentiment']}")
-        st.write(f"**Support Related:** {row['is_support']}")
-        st.write("---")
-        st.write(row["body"])
-
-        if st.button(f"✍️ Generate Draft Reply for Email {i}"):
-            with st.spinner("Generating draft reply..."):
-                draft = generate_draft_reply(row["subject"], row["body"])
-                st.success("✅ Draft Reply Generated")
-                st.write(draft)
-        
-
-
+        # Draft reply button
+        if st.button(f"Generate Draft Reply (Support)", key=f"support_{row.name}"):
+            try:
+                draft_reply = generate_draft_reply(row['subject'], row['body'])
+            except Exception as e:
+                draft_reply = f"Could not generate reply: {str(e)}"
+            st.text_area("📄 Draft Reply", value=draft_reply, height=150)
+        st.markdown("---")
